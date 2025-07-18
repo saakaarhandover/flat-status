@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flats Ready for Handover</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+    input { padding: 8px; font-size: 14px; margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>Flats Ready for Handover</h2>
+
+  <!-- Input for Cluster and Tower -->
+  <label>Cluster:</label>
+  <input type="text" id="clusterInput" placeholder="Enter Cluster Number">
+
+  <label>Tower:</label>
+  <input type="text" id="towerInput" placeholder="Enter Tower Number">
+
+  <br><br>
+  <button onclick="getData()">Show Flats</button>
+
+  <table id="dataTable" style="display:none;">
+    <thead>
+      <tr id="tableHeaderRow"></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <script>
+    function getData() {
+      const apiUrl = "https://script.google.com/macros/s/AKfycbwCHGXy7sSCAzbQedtEhR5hMyC5Uo6XdCexVXbutG9vJnQ-6_HKXqM-M41Ep0vIpqoIIQ/exec";
+
+      const clusterFilter = document.getElementById("clusterInput").value.trim().toLowerCase();
+      const towerFilter = document.getElementById("towerInput").value.trim().toLowerCase();
+
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById("dataTable");
+          const thead = document.getElementById("tableHeaderRow");
+          const tbody = document.getElementById("tableBody");
+          thead.innerHTML = '';
+          tbody.innerHTML = '';
+
+          // Filter data: Must have last column as non-empty (Ready for Handover)
+          const filteredData = data.filter(row => {
+            const isReady = row["Ready for Handover"]?.trim().toLowerCase() === "yes";
+            const matchesCluster = !clusterFilter || (row["Cluster"]?.toLowerCase() === clusterFilter);
+            const matchesTower = !towerFilter || (row["Tower"]?.toLowerCase() === towerFilter);
+            return isReady && matchesCluster && matchesTower;
+          });
+
+          if (filteredData.length === 0) {
+            alert("No flats found with selected filters.");
+            table.style.display = 'none';
+            return;
+          }
+
+          // Build header row
+          const headers = Object.keys(filteredData[0]);
+          headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            thead.appendChild(th);
+          });
+
+          // Build rows
+          filteredData.forEach(row => {
+            const tr = document.createElement('tr');
+            headers.forEach(header => {
+              const td = document.createElement('td');
+              td.textContent = row[header] || '';
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+
+          table.style.display = 'table';
+        })
+        .catch(err => alert("Error: " + err));
+    }
+  </script>
+</body>
+</html>
